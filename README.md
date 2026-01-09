@@ -209,7 +209,7 @@ These items are not recommended for deletion:
 
 ## License
 
-MIT
+GPL-3.0
 
 ## Contributing
 
