@@ -1,0 +1,189 @@
+{
+  "categories": {
+    "dev_tools": "Development Tools",
+    "system": "System Files",
+    "browsers": "Browser Caches",
+    "user_files": "User Files"
+  },
+  "locations": {
+    "gradle_caches": {
+      "path": ".gradle/caches",
+      "category": "dev_tools",
+      "name": "Gradle Build Cache",
+      "description": "Stores downloaded dependencies and build outputs from Gradle builds",
+      "impact": "Your next Android/Gradle build will be slower as dependencies re-download, but everything rebuilds automatically.",
+      "safety": "safe"
+    },
+    "gradle_wrapper": {
+      "path": ".gradle/wrapper",
+      "category": "dev_tools",
+      "name": "Gradle Wrapper Downloads",
+      "description": "Cached Gradle distribution files downloaded by the wrapper",
+      "impact": "The wrapper will re-download Gradle distributions on your next build, adding a few minutes.",
+      "safety": "caution"
+    },
+    "cursor_cache": {
+      "path": ".cursor/cache",
+      "category": "dev_tools",
+      "name": "Cursor Editor Cache",
+      "description": "Temporary files and cache used by Cursor editor for faster performance",
+      "impact": "Cursor may feel slightly slower on first launch after deletion, but will rebuild cache automatically.",
+      "safety": "safe"
+    },
+    "vscode_extensions": {
+      "path": ".vscode/extensions",
+      "category": "dev_tools",
+      "name": "VS Code Extensions",
+      "description": "Installed VS Code extensions and their cached data",
+      "impact": "You'll need to reinstall extensions. Only delete if you're sure you don't need them.",
+      "safety": "keep"
+    },
+    "android_avd": {
+      "path": ".android/avd",
+      "category": "dev_tools",
+      "name": "Android Virtual Devices",
+      "description": "Android emulator images and configurations",
+      "impact": "Deleting this removes your Android emulators. You'll need to recreate them in Android Studio.",
+      "safety": "caution"
+    },
+    "android_build_cache": {
+      "path": ".android/build-cache",
+      "category": "dev_tools",
+      "name": "Android Build Cache",
+      "description": "Cached build outputs from Android projects",
+      "impact": "Your next Android build will be slower, but everything rebuilds automatically.",
+      "safety": "safe"
+    },
+    "cargo_registry_cache": {
+      "path": ".cargo/registry/cache",
+      "category": "dev_tools",
+      "name": "Rust Package Cache",
+      "description": "Downloaded Rust crates from crates.io",
+      "impact": "Cargo will re-download packages on your next build, but everything rebuilds automatically.",
+      "safety": "safe"
+    },
+    "npm_cache": {
+      "path": ".npm/_cacache",
+      "category": "dev_tools",
+      "name": "NPM Package Cache",
+      "description": "Cached npm packages downloaded from the registry",
+      "impact": "npm will re-download packages on your next install, but everything works normally.",
+      "safety": "safe"
+    },
+    "generic_cache": {
+      "path": ".cache",
+      "category": "dev_tools",
+      "name": "Generic Application Cache",
+      "description": "General cache directory used by various applications",
+      "impact": "Some applications may feel slower on first launch, but caches rebuild automatically.",
+      "safety": "safe"
+    },
+    "pip_cache": {
+      "path": ".pip/cache",
+      "category": "dev_tools",
+      "name": "Python Pip Cache",
+      "description": "Cached Python packages downloaded by pip",
+      "impact": "pip will re-download packages on your next install, but everything works normally.",
+      "safety": "safe"
+    },
+    "maven_cache": {
+      "path": ".m2/repository",
+      "category": "dev_tools",
+      "name": "Maven Repository Cache",
+      "description": "Downloaded Maven dependencies and artifacts",
+      "impact": "Maven will re-download dependencies on your next build, but everything rebuilds automatically.",
+      "safety": "safe"
+    },
+    "windows_temp": {
+      "path": "C:\\Windows\\Temp",
+      "category": "system",
+      "name": "Windows Temp Files",
+      "description": "System temporary files created by Windows and applications",
+      "impact": "Windows will recreate temp files as needed. Safe to clean if no programs are running.",
+      "safety": "safe",
+      "requires_admin": true
+    },
+    "user_temp": {
+      "path": "%TEMP%",
+      "category": "system",
+      "name": "User Temp Files",
+      "description": "Your personal temporary files folder",
+      "impact": "Applications will recreate temp files as needed. Safe to clean.",
+      "safety": "safe"
+    },
+    "windows_update_downloads": {
+      "path": "C:\\Windows\\SoftwareDistribution\\Download",
+      "category": "system",
+      "name": "Windows Update Downloads",
+      "description": "Downloaded Windows update files (safe after updates are installed)",
+      "impact": "Windows will re-download updates if needed. Only clean if your system is up to date.",
+      "safety": "caution",
+      "requires_admin": true
+    },
+    "windows_logs": {
+      "path": "C:\\Windows\\Logs",
+      "category": "system",
+      "name": "Windows Log Files",
+      "description": "System log files older than 90 days",
+      "impact": "Old logs are rarely needed. Windows will create new logs as needed.",
+      "safety": "safe",
+      "requires_admin": true,
+      "age_threshold_days": 90
+    },
+    "package_cache": {
+      "path": "C:\\ProgramData\\Package Cache",
+      "category": "system",
+      "name": "Installer Package Cache",
+      "description": "Cached installer files from Microsoft and other programs",
+      "impact": "You may need to re-download installers for repairs/uninstalls. Usually safe to clean.",
+      "safety": "caution",
+      "requires_admin": true
+    },
+    "chrome_cache": {
+      "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Cache",
+      "category": "browsers",
+      "name": "Chrome Browser Cache",
+      "description": "Cached web pages, images, and other browser data",
+      "impact": "Chrome will rebuild cache automatically. You'll need to re-login to some sites.",
+      "safety": "safe",
+      "dynamic": true
+    },
+    "edge_cache": {
+      "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Cache",
+      "category": "browsers",
+      "name": "Edge Browser Cache",
+      "description": "Cached web pages, images, and other browser data",
+      "impact": "Edge will rebuild cache automatically. You'll need to re-login to some sites.",
+      "safety": "safe",
+      "dynamic": true
+    },
+    "firefox_cache": {
+      "path": "%LOCALAPPDATA%\\Mozilla\\Firefox\\Profiles",
+      "category": "browsers",
+      "name": "Firefox Browser Cache",
+      "description": "Cached web pages and browser data (scans all profiles)",
+      "impact": "Firefox will rebuild cache automatically. You'll need to re-login to some sites.",
+      "safety": "safe",
+      "dynamic": true,
+      "subpath": "cache2"
+    },
+    "downloads_old": {
+      "path": "%USERPROFILE%\\Downloads",
+      "category": "user_files",
+      "name": "Old Downloads",
+      "description": "Files in Downloads folder older than 180 days",
+      "impact": "These files will be permanently deleted. Review the list before cleaning.",
+      "safety": "caution",
+      "age_threshold_days": 180
+    },
+    "recycle_bin": {
+      "path": "RECYCLE_BIN",
+      "category": "system",
+      "name": "Recycle Bin",
+      "description": "Deleted files waiting to be permanently removed",
+      "impact": "Files will be permanently deleted. You can review contents before emptying.",
+      "safety": "safe",
+      "special": true
+    }
+  }
+}

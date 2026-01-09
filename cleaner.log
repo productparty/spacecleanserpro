@@ -1,0 +1,12 @@
+2026-01-08 22:06:38,193 - INFO - Starting deletion of: C:\Users\mwats\.gradle\caches
+2026-01-08 22:06:47,248 - INFO - Folder size: 9151.2 MB
+2026-01-08 22:06:47,418 - ERROR - OS Error: [WinError 3] The system cannot find the path specified: 'C:\\Users\\mwats\\.gradle\\caches\\8.14.3\\transforms\\2158404abfa263e8741332f372c03462\\transformed\\react-android-0.81.5-release\\prefab\\modules\\reactnative\\include\\react\\renderer\\components\\textinput\\platform\\android\\react\\renderer\\components\\androidtextinput\\AndroidTextInputComponentDescriptor.h'
+2026-01-08 22:07:44,549 - INFO - Starting deletion of: C:\Users\mwats\.cache
+2026-01-08 22:07:44,560 - INFO - Folder size: 391.0 MB
+2026-01-08 22:07:44,639 - INFO - Successfully deleted C:\Users\mwats\.cache
+2026-01-08 22:10:36,297 - INFO - Starting deletion of: C:\Users\mwats\.gradle\caches
+2026-01-08 22:10:45,109 - INFO - Folder size: 9151.2 MB
+2026-01-08 22:11:19,664 - INFO - Successfully deleted C:\Users\mwats\.gradle\caches
+2026-01-09 09:51:15,478 - INFO - Starting deletion of: C:\Users\mwats\AppData\Local\Temp
+2026-01-09 09:51:15,671 - INFO - Folder size: 9328.5 MB
+2026-01-09 09:51:17,032 - INFO - Successfully deleted C:\Users\mwats\AppData\Local\Temp
