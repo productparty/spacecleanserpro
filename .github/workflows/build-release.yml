@@ -63,7 +63,9 @@ jobs:
         id: get_version
         run: |
           $tag = "${{ github.ref }}"
-          $version = $tag -replace "refs/tags/v", ""
+          # Remove "refs/tags/" prefix, then remove optional "v" prefix
+          $version = $tag -replace "refs/tags/", "" -replace "^v", ""
+          Write-Host "Extracted version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
       
       - name: Rename executable with version
