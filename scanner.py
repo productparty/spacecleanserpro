@@ -10,6 +10,7 @@ from typing import List, Optional, Callable, Dict
 from datetime import datetime, timedelta
 
 from admin_helper import is_admin, check_admin_required
+from resource_path import get_resource_path
 
 
 @dataclass
@@ -35,8 +36,10 @@ class FolderInfo:
 class Scanner:
     """Scans C: drive for cache folders across dev tools, system, browsers, and user files."""
     
-    def __init__(self, config_path: str = "folder_defs.json"):
+    def __init__(self, config_path: str = None):
         """Initialize scanner with folder definitions."""
+        if config_path is None:
+            config_path = get_resource_path("folder_defs.json")
         self.config_path = config_path
         self.config = self._load_config()
         self.folder_defs = self.config.get("locations", {})

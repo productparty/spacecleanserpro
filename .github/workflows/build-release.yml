@@ -1,0 +1,47 @@
+name: Build Release Executable
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build executable
+        run: |
+          pyinstaller --onefile --windowed --add-data "folder_defs.json;." --name "SpaceCleanserPro" main.py
+      
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          $tag = "${{ github.ref }}"
+          $version = $tag -replace "refs/tags/v", ""
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+      
+      - name: Rename executable with version
+        run: |
+          $version = "${{ steps.get_version.outputs.version }}"
+          Move-Item -Path "dist\SpaceCleanserPro.exe" -Destination "dist\SpaceCleanserPro-v$version.exe"
+      
+      - name: Upload release asset
+        run: |
+          $version = "${{ steps.get_version.outputs.version }}"
+          gh release upload "v$version" "dist\SpaceCleanserPro-v$version.exe" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

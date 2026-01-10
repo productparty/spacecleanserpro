@@ -3,6 +3,7 @@ Settings and cache persistence for Space Cleanser Pro.
 """
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -10,12 +11,37 @@ from datetime import datetime
 from scanner import FolderInfo
 
 
+def get_settings_path() -> Path:
+    """
+    Get path for settings file (writable location).
+    
+    When running as a bundled executable, settings are stored in AppData/Local/SpaceCleanserPro/
+    to ensure the file is writable. When running from source, settings are stored in the
+    current directory.
+    
+    Returns:
+        Path object pointing to the settings.json file
+    """
+    if getattr(sys, 'frozen', False):
+        # Bundled: use AppData/Local/SpaceCleanserPro/
+        app_data = Path(os.environ.get('LOCALAPPDATA', Path.home()))
+        settings_dir = app_data / 'SpaceCleanserPro'
+        settings_dir.mkdir(exist_ok=True)
+        return settings_dir / 'settings.json'
+    else:
+        # Development: use current directory
+        return Path('settings.json')
+
+
 class Settings:
     """Manages user preferences and cached scan results."""
     
-    def __init__(self, settings_file: str = "settings.json"):
+    def __init__(self, settings_file: str = None):
         """Initialize settings manager."""
-        self.settings_file = Path(settings_file)
+        if settings_file is None:
+            self.settings_file = get_settings_path()
+        else:
+            self.settings_file = Path(settings_file)
         self.settings = self._load_settings()
     
     def _load_settings(self) -> dict:

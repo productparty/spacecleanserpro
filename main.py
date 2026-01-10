@@ -7,6 +7,9 @@ import tkinter.messagebox as messagebox
 from ui.dashboard import Dashboard
 from admin_helper import is_admin, request_elevation, get_admin_message
 
+# Version string for display in window title and releases
+VERSION = "1.0.0"
+
 
 def main():
     """Launch the application."""
@@ -16,7 +19,7 @@ def main():
     
     # Create main window
     root = ctk.CTk()
-    root.title("Space Cleanser Pro")
+    root.title(f"Space Cleanser Pro v{VERSION}")
     root.geometry("1200x800")
     root.minsize(1000, 700)
     

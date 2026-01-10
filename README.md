@@ -6,6 +6,60 @@ Whether you're a developer drowning in Gradle caches (31 GB, anyone?) or just wo
 
 **Built for anyone who's ever stared at "Other: 72.4 GB" and thought "but what IS that?"**
 
+## Quick Start - No Installation Required
+
+### Download & Run
+
+**[⬇️ Download Latest Release](https://github.com/productparty/spacecleanser/releases/latest)**
+
+1. Go to [Releases](https://github.com/productparty/spacecleanser/releases/latest)
+2. Download `SpaceCleanserPro-v*.exe`
+3. Double-click to run
+
+**No Python installation needed** - Just download and run!
+
+### Windows SmartScreen Warning
+
+When you first run the downloaded `.exe`, Windows may show a SmartScreen warning saying "Windows protected your PC" or "Unknown publisher". This is normal for unsigned executables.
+
+**Why this happens:**
+- The app isn't code-signed (certificates cost $300-500/year)
+- Windows shows this warning for any unsigned executable from the internet
+- The source code is fully open source and available for security review
+
+**How to proceed:**
+1. Click **"More info"** on the warning dialog
+2. Click **"Run anyway"**
+3. The app will launch normally
+
+This is standard for free, open-source tools. Once you run it once, Windows will remember and won't show the warning again.
+
+### Running from Source (For Developers)
+
+If you want to run from source or contribute:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/productparty/spacecleanser.git
+   cd spacecleanser
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the application:**
+   ```bash
+   python main.py
+   ```
+
+4. **Build executable locally (for testing):**
+   ```bash
+   build.bat
+   ```
+   The executable will be in the `dist/` folder.
+
 ## Features
 
 ### 🔍 Transparent Scanning
@@ -53,37 +107,12 @@ Scans and manages caches for:
 - **Recycle Bin**
 - **Old Downloads** (configurable age threshold)
 
-## Installation
+## Requirements
 
-### Requirements
 - **Windows 10/11**
-- **Python 3.8 or higher**
 - Administrator privileges (optional, for full system scanning)
 
-### Setup
-
-1. **Clone or download this repository**
-
-2. **Install dependencies:**
-```bash
-pip install -r requirements.txt
-```
-
-3. **Run the application:**
-```bash
-python main.py
-```
-
-### Building a Standalone Executable
-
-To create a single `.exe` file for Windows:
-
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name "SpaceCleanserPro" main.py
-```
-
-The executable will be in the `dist/` folder.
+**Note:** If running from source, you'll need Python 3.8+ and the dependencies listed in `requirements.txt`.
 
 ## Usage
 
