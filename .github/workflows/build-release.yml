@@ -26,6 +26,10 @@ jobs:
       - name: Build executable
         run: |
           pyinstaller --onefile --windowed --add-data "folder_defs.json;." --name "SpaceCleanserPro" main.py
+          if (-not (Test-Path "dist\SpaceCleanserPro.exe")) {
+            Write-Error "Build failed - executable not found"
+            exit 1
+          }
       
       - name: Extract version from tag
         id: get_version
@@ -42,6 +46,24 @@ jobs:
       - name: Upload release asset
         run: |
           $version = "${{ steps.get_version.outputs.version }}"
-          gh release upload "v$version" "dist\SpaceCleanserPro-v$version.exe" --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          $filePath = "dist\SpaceCleanserPro-v$version.exe"
+          $fileName = "SpaceCleanserPro-v$version.exe"
+          
+          if (-not (Test-Path $filePath)) {
+            Write-Error "File not found: $filePath"
+            exit 1
+          }
+          
+          $uploadUrl = "${{ github.event.release.upload_url }}".Replace("{?name,label}", "?name=$fileName")
+          Write-Host "Uploading $fileName to release..."
+          $headers = @{
+            "Authorization" = "Bearer ${{ secrets.GITHUB_TOKEN }}"
+            "Content-Type" = "application/octet-stream"
+          }
+          try {
+            Invoke-RestMethod -Method Post -Uri $uploadUrl -Headers $headers -InFile $filePath
+            Write-Host "Upload successful!"
+          } catch {
+            Write-Error "Upload failed: $_"
+            exit 1
+          }

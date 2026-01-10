@@ -10,9 +10,9 @@ Whether you're a developer drowning in Gradle caches (31 GB, anyone?) or just wo
 
 ### Download & Run
 
-**[⬇️ Download Latest Release](https://github.com/productparty/spacecleanser/releases/latest)**
+**[⬇️ Download Latest Release](https://github.com/productparty/spacecleanserpro/releases/latest)**
 
-1. Go to [Releases](https://github.com/productparty/spacecleanser/releases/latest)
+1. Go to [Releases](https://github.com/productparty/spacecleanserpro/releases/latest)
 2. Download `SpaceCleanserPro-v*.exe`
 3. Double-click to run
 
@@ -24,7 +24,7 @@ If you want to run from source or contribute:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/productparty/spacecleanser.git
+   git clone https://github.com/productparty/spacecleanserpro.git
    cd spacecleanser
    ```
 
