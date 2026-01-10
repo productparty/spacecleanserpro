@@ -27,7 +27,8 @@ class DiscoveryPanel(ctk.CTkFrame):
         self.large_files: List[LargeFileInfo] = []
         self.selected_duplicate_files: Dict[DuplicateGroup, List[FileInfo]] = {}
         self.selected_large_files: List[LargeFileInfo] = []
-        self.cancel_event = threading.Event()
+        self.duplicate_cancel_event = threading.Event()
+        self.large_file_cancel_event = threading.Event()
         
         self._build_ui()
     
@@ -248,7 +249,7 @@ class DiscoveryPanel(ctk.CTkFrame):
         self.progress_frame.pack(fill="x", pady=(16, 0))
         self.progress_bar.set(0)
         self.progress_label.configure(text="Starting duplicate scan...")
-        self.cancel_event.clear()
+        self.duplicate_cancel_event.clear()
         
         # Run scan in background thread
         thread = threading.Thread(target=self._duplicate_scan_thread, daemon=True)
@@ -273,14 +274,14 @@ class DiscoveryPanel(ctk.CTkFrame):
             groups = self.scanner.scan_duplicates(
                 root_path,
                 progress_callback=progress_callback,
-                cancel_event=self.cancel_event
+                cancel_event=self.duplicate_cancel_event
             )
             
-            if not self.cancel_event.is_set():
+            if not self.duplicate_cancel_event.is_set():
                 self.after(0, lambda: self._on_duplicate_scan_complete(groups))
         except Exception as e:
-            if not self.cancel_event.is_set():
-                self.after(0, lambda: self._on_scan_error(str(e)))
+            if not self.duplicate_cancel_event.is_set():
+                self.after(0, lambda: self._on_scan_error(str(e), "duplicate"))
     
     def _on_duplicate_scan_complete(self, groups: List[DuplicateGroup]):
         """Handle duplicate scan completion."""
@@ -297,9 +298,11 @@ class DiscoveryPanel(ctk.CTkFrame):
             text=f"{len(groups)} groups, {format_size(total_wasted)} wasted"
         )
         
-        # Display results
+        # Display results immediately
         try:
+            print(f"Displaying {len(groups)} duplicate groups...")
             self._display_duplicates()
+            print(f"Display complete. Cards created: {len(self.duplicates_scroll.winfo_children())}")
         except Exception as e:
             print(f"Error displaying duplicates: {e}")
             import traceback
@@ -334,8 +337,14 @@ class DiscoveryPanel(ctk.CTkFrame):
             empty_label.pack(pady=40)
             return
         
+        # Limit initial display to first 100 groups for performance
+        # User can scroll to see more
+        groups_to_display = self.duplicate_groups[:100]
+        has_more = len(self.duplicate_groups) > 100
+        
         # Create cards for each duplicate group
-        for group in self.duplicate_groups:
+        cards_created = 0
+        for i, group in enumerate(groups_to_display):
             try:
                 card = DuplicateGroupCard(
                     self.duplicates_scroll,
@@ -343,14 +352,30 @@ class DiscoveryPanel(ctk.CTkFrame):
                     on_selection_changed=self._on_duplicate_selection_changed
                 )
                 card.pack(fill="x", pady=(0, 12), padx=8)
+                cards_created += 1
+                
+                # Update UI periodically for large lists
+                if (i + 1) % 25 == 0:
+                    self.duplicates_scroll.update_idletasks()
             except Exception as e:
-                print(f"Error creating card for duplicate group: {e}")
+                print(f"Error creating card for duplicate group {i}: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
         
+        # Show "more" indicator if there are more groups
+        if has_more:
+            more_label = ctk.CTkLabel(
+                self.duplicates_scroll,
+                text=f"... and {len(self.duplicate_groups) - 100} more groups (scroll to see all)",
+                font=ctk.CTkFont(size=12),
+                text_color="gray"
+            )
+            more_label.pack(pady=10)
+        
         # Force UI update
-        self.duplicates_scroll.update()
+        self.duplicates_scroll.update_idletasks()
+        print(f"Created {cards_created} duplicate cards (showing first 100 of {len(self.duplicate_groups)})")
     
     def _on_duplicate_selection_changed(self, group: DuplicateGroup, selected_files: List[FileInfo]):
         """Handle duplicate file selection change."""
@@ -382,12 +407,19 @@ class DiscoveryPanel(ctk.CTkFrame):
             "5GB": 5120
         }.get(threshold_str, 100)
         
-        # Show progress
-        self.completion_frame.pack_forget()
-        self.progress_frame.pack(fill="x", pady=(16, 0))
-        self.progress_bar.set(0)
-        self.progress_label.configure(text="Starting large file scan...")
-        self.cancel_event.clear()
+        # Show progress (only if not already showing for duplicates)
+        if not self.progress_frame.winfo_viewable():
+            self.completion_frame.pack_forget()
+            self.progress_frame.pack(fill="x", pady=(16, 0))
+            self.progress_bar.set(0)
+        
+        # Update label to show both scans if duplicates is running
+        if self.scan_duplicates_btn.cget("state") == "disabled":
+            self.progress_label.configure(text="Scanning large files (duplicate scan also running)...")
+        else:
+            self.progress_label.configure(text="Starting large file scan...")
+        
+        self.large_file_cancel_event.clear()
         
         # Run scan in background thread
         thread = threading.Thread(
@@ -400,9 +432,14 @@ class DiscoveryPanel(ctk.CTkFrame):
     def _large_file_scan_thread(self, threshold_mb: int):
         """Background thread for large file scanning."""
         def progress_callback(current: int, total: int):
-            self.after(0, lambda: self.progress_label.configure(
-                text=f"Scanning large files... {current} files found"
-            ))
+            if self.scan_duplicates_btn.cget("state") == "disabled":
+                self.after(0, lambda: self.progress_label.configure(
+                    text=f"Large files: {current} found | Duplicate scan running..."
+                ))
+            else:
+                self.after(0, lambda: self.progress_label.configure(
+                    text=f"Scanning large files... {current} files found"
+                ))
         
         try:
             root_path = Path("C:\\")
@@ -410,14 +447,14 @@ class DiscoveryPanel(ctk.CTkFrame):
                 root_path,
                 threshold_mb=threshold_mb,
                 progress_callback=progress_callback,
-                cancel_event=self.cancel_event
+                cancel_event=self.large_file_cancel_event
             )
             
-            if not self.cancel_event.is_set():
+            if not self.large_file_cancel_event.is_set():
                 self.after(0, lambda: self._on_large_file_scan_complete(files))
         except Exception as e:
-            if not self.cancel_event.is_set():
-                self.after(0, lambda: self._on_scan_error(str(e)))
+            if not self.large_file_cancel_event.is_set():
+                self.after(0, lambda: self._on_scan_error(str(e), "large_file"))
     
     def _on_large_file_scan_complete(self, files: List[LargeFileInfo]):
         """Handle large file scan completion."""
@@ -434,9 +471,11 @@ class DiscoveryPanel(ctk.CTkFrame):
             text=f"{len(files)} files, {format_size(total_size)} total"
         )
         
-        # Display results
+        # Display results immediately
         try:
+            print(f"Displaying {len(files)} large files...")
             self._display_large_files()
+            print(f"Display complete. Cards created: {len(self.large_files_scroll.winfo_children())}")
         except Exception as e:
             print(f"Error displaying large files: {e}")
             import traceback
@@ -471,8 +510,13 @@ class DiscoveryPanel(ctk.CTkFrame):
             empty_label.pack(pady=40)
             return
         
+        # Limit initial display to first 100 files for performance
+        files_to_display = self.large_files[:100]
+        has_more = len(self.large_files) > 100
+        
         # Create cards for each large file
-        for large_file in self.large_files:
+        cards_created = 0
+        for i, large_file in enumerate(files_to_display):
             try:
                 card = LargeFileCard(
                     self.large_files_scroll,
@@ -482,14 +526,30 @@ class DiscoveryPanel(ctk.CTkFrame):
                     on_open_location=self._on_open_location
                 )
                 card.pack(fill="x", pady=(0, 12), padx=8)
+                cards_created += 1
+                
+                # Update UI periodically for large lists
+                if (i + 1) % 25 == 0:
+                    self.large_files_scroll.update_idletasks()
             except Exception as e:
-                print(f"Error creating card for large file: {e}")
+                print(f"Error creating card for large file {i}: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
         
+        # Show "more" indicator if there are more files
+        if has_more:
+            more_label = ctk.CTkLabel(
+                self.large_files_scroll,
+                text=f"... and {len(self.large_files) - 100} more files (scroll to see all)",
+                font=ctk.CTkFont(size=12),
+                text_color="gray"
+            )
+            more_label.pack(pady=10)
+        
         # Force UI update
-        self.large_files_scroll.update()
+        self.large_files_scroll.update_idletasks()
+        print(f"Created {cards_created} large file cards (showing first 100 of {len(self.large_files)})")
     
     def _on_delete_large_file(self, large_file: LargeFileInfo):
         """Handle delete request for a large file."""
@@ -519,8 +579,9 @@ class DiscoveryPanel(ctk.CTkFrame):
         self.cleaner.open_in_explorer(file_path.parent)
     
     def _cancel_scan(self):
-        """Cancel current scan."""
-        self.cancel_event.set()
+        """Cancel current scans."""
+        self.duplicate_cancel_event.set()
+        self.large_file_cancel_event.set()
         self.progress_label.configure(text="Cancelling...")
     
     def _update_batch_bar(self):
@@ -675,15 +736,25 @@ class DiscoveryPanel(ctk.CTkFrame):
         self.completion_label.configure(text=msg)
         self.completion_frame.pack(fill="x", pady=(16, 0))
     
-    def _on_scan_error(self, error_msg: str):
+    def _on_scan_error(self, error_msg: str, scan_type: str = "unknown"):
         """Handle scan error."""
         self.progress_bar.set(0)
-        self.progress_frame.pack_forget()
         
-        self.completion_label.configure(text=f"✗ Error: {error_msg}")
+        # Only hide progress if both scans are done
+        if (self.scan_duplicates_btn.cget("state") == "normal" and 
+            self.scan_large_files_btn.cget("state") == "normal"):
+            self.progress_frame.pack_forget()
+        
+        self.completion_label.configure(text=f"✗ Error ({scan_type}): {error_msg}")
         self.completion_frame.configure(fg_color="#4a1a1a")
         self.completion_label.configure(text_color="#dc3545")
         self.completion_frame.pack(fill="x", pady=(16, 0))
         
-        self.scan_duplicates_btn.configure(state="normal", text="Scan for Duplicates")
-        self.scan_large_files_btn.configure(state="normal", text="Scan for Large Files")
+        # Reset buttons based on scan type
+        if scan_type == "duplicate":
+            self.scan_duplicates_btn.configure(state="normal", text="Scan for Duplicates")
+        elif scan_type == "large_file":
+            self.scan_large_files_btn.configure(state="normal", text="Scan for Large Files")
+        else:
+            self.scan_duplicates_btn.configure(state="normal", text="Scan for Duplicates")
+            self.scan_large_files_btn.configure(state="normal", text="Scan for Large Files")
