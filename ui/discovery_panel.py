@@ -84,6 +84,16 @@ class DiscoveryPanel(ctk.CTkFrame):
         )
         self.scan_large_files_btn.pack(side="left")
         
+        self.scan_both_btn = ctk.CTkButton(
+            button_frame,
+            text="Scan Both",
+            command=self._start_both_scans,
+            width=100,
+            height=32,
+            fg_color="#28a745"
+        )
+        self.scan_both_btn.pack(side="left", padx=(10, 0))
+        
         # Threshold selector for large files
         threshold_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
         threshold_frame.pack(side="right")
@@ -233,10 +243,15 @@ class DiscoveryPanel(ctk.CTkFrame):
             fg_color="#dc3545"
         ).pack(side="right")
     
+    def _start_both_scans(self):
+        """Start both duplicate and large file scans simultaneously."""
+        self._start_duplicate_scan()
+        self._start_large_file_scan()
+    
     def _start_duplicate_scan(self):
         """Start scanning for duplicates."""
         self.scan_duplicates_btn.configure(state="disabled", text="Scanning...")
-        self.scan_large_files_btn.configure(state="disabled")
+        self.scan_both_btn.configure(state="disabled")
         
         # Clear previous results
         for widget in self.duplicates_scroll.winfo_children():
@@ -319,6 +334,7 @@ class DiscoveryPanel(ctk.CTkFrame):
         # Reset buttons
         self.scan_duplicates_btn.configure(state="normal", text="Scan for Duplicates")
         self.scan_large_files_btn.configure(state="normal")
+        self.scan_both_btn.configure(state="normal")
     
     def _display_duplicates(self):
         """Display duplicate groups."""
@@ -388,8 +404,8 @@ class DiscoveryPanel(ctk.CTkFrame):
     
     def _start_large_file_scan(self):
         """Start scanning for large files."""
-        self.scan_duplicates_btn.configure(state="disabled")
         self.scan_large_files_btn.configure(state="disabled", text="Scanning...")
+        self.scan_both_btn.configure(state="disabled")
         
         # Clear previous results
         for widget in self.large_files_scroll.winfo_children():
@@ -492,6 +508,7 @@ class DiscoveryPanel(ctk.CTkFrame):
         # Reset buttons
         self.scan_duplicates_btn.configure(state="normal")
         self.scan_large_files_btn.configure(state="normal", text="Scan for Large Files")
+        self.scan_both_btn.configure(state="normal")
     
     def _display_large_files(self):
         """Display large files."""

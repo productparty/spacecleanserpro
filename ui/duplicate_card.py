@@ -99,55 +99,62 @@ class DuplicateGroupCard(ctk.CTkFrame):
         )
         keep_oldest_btn.pack(side="right")
         
-        # Expandable file list
-        self.expand_btn = ctk.CTkButton(
-            content,
-            text="▼ Show all copies",
-            font=ctk.CTkFont(size=11),
-            fg_color="transparent",
-            hover_color="#2b2b2b",
-            anchor="w",
-            command=self._toggle_expand,
-            width=150,
-            height=24
-        )
-        self.expand_btn.pack(anchor="w", pady=(0, 8))
-        
-        # File list frame (hidden initially)
+        # File list frame (always visible with preview)
         self.file_list_frame = ctk.CTkFrame(content, fg_color="#1a1a1a", corner_radius=4)
-        self.file_list_frame.pack_forget()
+        self.file_list_frame.pack(fill="x", pady=(0, 8))
         
-        # Preview first 3 files
+        # Show preview of first 3 files
         self._show_preview()
+        
+        # Expandable button (only show if more than 3 files)
+        if len(self.duplicate_group.files) > 3:
+            self.expand_btn = ctk.CTkButton(
+                content,
+                text=f"▼ Show all {len(self.duplicate_group.files)} copies",
+                font=ctk.CTkFont(size=11),
+                fg_color="transparent",
+                hover_color="#2b2b2b",
+                anchor="w",
+                command=self._toggle_expand,
+                width=200,
+                height=24
+            )
+            self.expand_btn.pack(anchor="w")
+        else:
+            self.expand_btn = None
     
     def _show_preview(self):
         """Show preview of first 3 files."""
         preview_count = min(3, len(self.duplicate_group.files))
         for i, file_info in enumerate(self.duplicate_group.files[:preview_count]):
             self._add_file_row(file_info, i)
-        
-        if len(self.duplicate_group.files) > 3:
-            self.expand_btn.configure(text=f"▼ Show all {len(self.duplicate_group.files)} copies")
     
     def _toggle_expand(self):
         """Toggle expanded view showing all files."""
+        if self.expand_btn is None:
+            return
+            
         if self.expanded:
-            # Collapse
-            self.file_list_frame.pack_forget()
+            # Collapse - show only first 3
+            for widget in self.file_list_frame.winfo_children():
+                widget.destroy()
+            self.checkbox_vars.clear()
+            
+            for i, file_info in enumerate(self.duplicate_group.files[:3]):
+                self._add_file_row(file_info, i)
+            
             self.expand_btn.configure(text=f"▼ Show all {len(self.duplicate_group.files)} copies")
             self.expanded = False
         else:
-            # Expand
-            self.file_list_frame.pack(fill="x", pady=(0, 8))
-            
-            # Clear and rebuild file list
+            # Expand - show all files
             for widget in self.file_list_frame.winfo_children():
                 widget.destroy()
+            self.checkbox_vars.clear()
             
             for i, file_info in enumerate(self.duplicate_group.files):
                 self._add_file_row(file_info, i)
             
-            self.expand_btn.configure(text="▲ Hide copies")
+            self.expand_btn.configure(text="▲ Show less")
             self.expanded = True
     
     def _add_file_row(self, file_info: FileInfo, index: int):
@@ -235,7 +242,8 @@ class DuplicateGroupCard(ctk.CTkFrame):
     
     def _update_checkboxes(self):
         """Update checkbox states to match selected_files."""
-        if not self.expanded:
+        # Expand to show all files if not already
+        if not self.expanded and self.expand_btn is not None:
             self._toggle_expand()
         
         # Update all checkbox states
