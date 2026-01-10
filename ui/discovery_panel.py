@@ -288,6 +288,7 @@ class DiscoveryPanel(ctk.CTkFrame):
         
         # Stop and hide progress bar
         self.progress_bar.set(1.0)
+        self.progress_label.configure(text="Scan complete!")
         self.progress_frame.pack_forget()
         
         # Update summary
@@ -297,7 +298,12 @@ class DiscoveryPanel(ctk.CTkFrame):
         )
         
         # Display results
-        self._display_duplicates()
+        try:
+            self._display_duplicates()
+        except Exception as e:
+            print(f"Error displaying duplicates: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Show completion message
         self.completion_label.configure(
@@ -313,13 +319,38 @@ class DiscoveryPanel(ctk.CTkFrame):
     
     def _display_duplicates(self):
         """Display duplicate groups."""
-        for group in self.duplicate_groups:
-            card = DuplicateGroupCard(
+        # Clear any existing widgets first
+        for widget in self.duplicates_scroll.winfo_children():
+            widget.destroy()
+        
+        if not self.duplicate_groups:
+            # Show empty state
+            empty_label = ctk.CTkLabel(
                 self.duplicates_scroll,
-                group,
-                on_selection_changed=self._on_duplicate_selection_changed
+                text="No duplicates found.",
+                font=ctk.CTkFont(size=14),
+                text_color="gray"
             )
-            card.pack(fill="x", pady=(0, 12))
+            empty_label.pack(pady=40)
+            return
+        
+        # Create cards for each duplicate group
+        for group in self.duplicate_groups:
+            try:
+                card = DuplicateGroupCard(
+                    self.duplicates_scroll,
+                    group,
+                    on_selection_changed=self._on_duplicate_selection_changed
+                )
+                card.pack(fill="x", pady=(0, 12), padx=8)
+            except Exception as e:
+                print(f"Error creating card for duplicate group: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        # Force UI update
+        self.duplicates_scroll.update()
     
     def _on_duplicate_selection_changed(self, group: DuplicateGroup, selected_files: List[FileInfo]):
         """Handle duplicate file selection change."""
@@ -394,6 +425,7 @@ class DiscoveryPanel(ctk.CTkFrame):
         
         # Stop and hide progress bar
         self.progress_bar.set(1.0)
+        self.progress_label.configure(text="Scan complete!")
         self.progress_frame.pack_forget()
         
         # Update summary
@@ -403,7 +435,12 @@ class DiscoveryPanel(ctk.CTkFrame):
         )
         
         # Display results
-        self._display_large_files()
+        try:
+            self._display_large_files()
+        except Exception as e:
+            print(f"Error displaying large files: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Show completion message
         self.completion_label.configure(
@@ -419,15 +456,40 @@ class DiscoveryPanel(ctk.CTkFrame):
     
     def _display_large_files(self):
         """Display large files."""
-        for large_file in self.large_files:
-            card = LargeFileCard(
+        # Clear any existing widgets first
+        for widget in self.large_files_scroll.winfo_children():
+            widget.destroy()
+        
+        if not self.large_files:
+            # Show empty state
+            empty_label = ctk.CTkLabel(
                 self.large_files_scroll,
-                large_file,
-                on_delete=self._on_delete_large_file,
-                on_move=self._on_move_large_file,
-                on_open_location=self._on_open_location
+                text="No large files found.",
+                font=ctk.CTkFont(size=14),
+                text_color="gray"
             )
-            card.pack(fill="x", pady=(0, 12))
+            empty_label.pack(pady=40)
+            return
+        
+        # Create cards for each large file
+        for large_file in self.large_files:
+            try:
+                card = LargeFileCard(
+                    self.large_files_scroll,
+                    large_file,
+                    on_delete=self._on_delete_large_file,
+                    on_move=self._on_move_large_file,
+                    on_open_location=self._on_open_location
+                )
+                card.pack(fill="x", pady=(0, 12), padx=8)
+            except Exception as e:
+                print(f"Error creating card for large file: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        # Force UI update
+        self.large_files_scroll.update()
     
     def _on_delete_large_file(self, large_file: LargeFileInfo):
         """Handle delete request for a large file."""

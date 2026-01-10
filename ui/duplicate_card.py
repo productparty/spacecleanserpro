@@ -23,7 +23,7 @@ class DuplicateGroupCard(ctk.CTkFrame):
         self.selected_files: List[FileInfo] = []
         self.checkbox_vars: Dict[FileInfo, ctk.BooleanVar] = {}
         
-        # Color based on wasted space
+        # Color based on wasted space (stored for potential use)
         wasted_space = duplicate_group.get_wasted_space()
         if wasted_space > 5 * 1024 * 1024 * 1024:  # >5GB
             self.border_color = "#dc3545"  # Red
@@ -32,7 +32,9 @@ class DuplicateGroupCard(ctk.CTkFrame):
         else:
             self.border_color = "#ffeb3b"  # Yellow
         
-        self.configure(border_color=self.border_color)
+        # Note: CustomTkinter doesn't support border_color directly
+        # We'll use border_width=2 to make it more visible
+        self.configure(border_width=2)
         
         self._build_ui()
     
