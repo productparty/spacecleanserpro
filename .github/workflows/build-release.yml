@@ -25,11 +25,39 @@ jobs:
       
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --add-data "folder_defs.json;." --name "SpaceCleanserPro" main.py
+          Write-Host "Starting PyInstaller build..."
+          Write-Host "Python version:"
+          python --version
+          Write-Host "PyInstaller version:"
+          pyinstaller --version
+          
+          # Build with CustomTkinter support
+          pyinstaller `
+            --onefile `
+            --windowed `
+            --add-data "folder_defs.json;." `
+            --hidden-import customtkinter `
+            --hidden-import tkinter `
+            --hidden-import PIL `
+            --hidden-import PIL._tkinter_finder `
+            --name "SpaceCleanserPro" `
+            --noconfirm `
+            main.py
+          
+          Write-Host "PyInstaller build completed"
+          
           if (-not (Test-Path "dist\SpaceCleanserPro.exe")) {
-            Write-Error "Build failed - executable not found"
+            Write-Error "Build failed - executable not found in dist folder"
+            Write-Host "Contents of dist folder:"
+            Get-ChildItem -Path "dist" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+            Write-Host "Contents of build folder:"
+            Get-ChildItem -Path "build" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
             exit 1
           }
+          
+          Write-Host "Build successful! Executable size:"
+          $sizeMB = (Get-Item "dist\SpaceCleanserPro.exe").Length / 1MB
+          Write-Host "$sizeMB MB"
       
       - name: Extract version from tag
         id: get_version
