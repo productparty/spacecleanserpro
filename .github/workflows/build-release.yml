@@ -71,7 +71,13 @@ jobs:
       - name: Rename executable with version
         run: |
           $version = "${{ steps.get_version.outputs.version }}"
+          Write-Host "Renaming with version: $version"
+          if (-not (Test-Path "dist\SpaceCleanserPro.exe")) {
+            Write-Error "Source file not found: dist\SpaceCleanserPro.exe"
+            exit 1
+          }
           Move-Item -Path "dist\SpaceCleanserPro.exe" -Destination "dist\SpaceCleanserPro-v$version.exe"
+          Write-Host "Renamed to: dist\SpaceCleanserPro-v$version.exe"
       
       - name: Upload release asset
         run: |
