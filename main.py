@@ -8,7 +8,7 @@ from ui.dashboard import Dashboard
 from admin_helper import is_admin, request_elevation, get_admin_message
 
 # Version string for display in window title and releases
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 
 
 def main():

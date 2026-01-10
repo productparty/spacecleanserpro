@@ -83,13 +83,17 @@ jobs:
           Write-Host "Renamed to: dist\SpaceCleanserPro-v$version.exe"
       
       - name: Create release and upload asset
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/SpaceCleanserPro-v${{ steps.get_version.outputs.version }}.exe
-          name: Space Cleanser Pro v${{ steps.get_version.outputs.version }}
-          tag_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+        run: |
+          $version = "${{ steps.get_version.outputs.version }}"
+          $tag = "${{ github.ref_name }}"
+          $file = "dist/SpaceCleanserPro-v$version.exe"
+          
+          Write-Host "Creating release $tag with asset $file..."
+          
+          gh release create $tag $file `
+            --title "Space Cleanser Pro v$version" `
+            --generate-notes
+          
+          Write-Host "Release created successfully!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
