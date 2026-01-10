@@ -82,26 +82,8 @@ jobs:
           Write-Host "Renamed to: dist\SpaceCleanserPro-v$version.exe"
       
       - name: Upload release asset
-        run: |
-          $version = "${{ steps.get_version.outputs.version }}"
-          $filePath = "dist\SpaceCleanserPro-v$version.exe"
-          $fileName = "SpaceCleanserPro-v$version.exe"
-          
-          if (-not (Test-Path $filePath)) {
-            Write-Error "File not found: $filePath"
-            exit 1
-          }
-          
-          $uploadUrl = "${{ github.event.release.upload_url }}".Replace("{?name,label}", "?name=$fileName")
-          Write-Host "Uploading $fileName to release..."
-          $headers = @{
-            "Authorization" = "Bearer ${{ secrets.GITHUB_TOKEN }}"
-            "Content-Type" = "application/octet-stream"
-          }
-          try {
-            Invoke-RestMethod -Method Post -Uri $uploadUrl -Headers $headers -InFile $filePath
-            Write-Host "Upload successful!"
-          } catch {
-            Write-Error "Upload failed: $_"
-            exit 1
-          }
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/SpaceCleanserPro-v${{ steps.get_version.outputs.version }}.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
