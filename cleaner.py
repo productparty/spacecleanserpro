@@ -228,3 +228,62 @@ class Cleaner:
         except Exception as e:
             print(f"Error opening folder: {e}")
             return False
+    
+    @staticmethod
+    def move_file(source: Path, destination: Path) -> Tuple[bool, Optional[str]]:
+        """
+        Move a file to a destination directory, handling Windows long paths.
+        
+        Args:
+            source: Source file path
+            destination: Destination directory (file will keep same name)
+            
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str])
+        """
+        logger.info(f"Moving file: {source} -> {destination}")
+        
+        if not source.exists():
+            logger.error("Source file doesn't exist")
+            return False, "Source file doesn't exist"
+        
+        if not source.is_file():
+            logger.error("Source path is not a file")
+            return False, "Source path is not a file"
+        
+        if not destination.exists():
+            logger.info(f"Creating destination directory: {destination}")
+            try:
+                destination.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error(f"Failed to create destination directory: {e}")
+                return False, f"Failed to create destination directory: {str(e)}"
+        
+        if not destination.is_dir():
+            logger.error("Destination is not a directory")
+            return False, "Destination is not a directory"
+        
+        # Destination file path
+        dest_file = destination / source.name
+        
+        # Check if destination file already exists
+        if dest_file.exists():
+            logger.warning(f"Destination file already exists: {dest_file}")
+            return False, "Destination file already exists"
+        
+        try:
+            # Use shutil.move which handles Windows long paths better than rename
+            shutil.move(str(source), str(dest_file))
+            logger.info(f"Successfully moved {source} to {dest_file}")
+            return True, None
+        except PermissionError as e:
+            error_str = str(e)
+            logger.error(f"Permission denied: {error_str}")
+            return False, f"Permission denied: {error_str}"
+        except OSError as e:
+            error_str = str(e)
+            logger.error(f"OS Error: {error_str}")
+            return False, f"Cannot move file: {error_str}"
+        except Exception as e:
+            logger.exception(f"Unexpected error moving file {source}")
+            return False, f"Unexpected error: {type(e).__name__}"

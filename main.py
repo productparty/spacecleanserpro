@@ -8,7 +8,7 @@ from ui.dashboard import Dashboard
 from admin_helper import is_admin, request_elevation, get_admin_message
 
 # Version string for display in window title and releases
-VERSION = "1.0.6"
+VERSION = "1.1.0"
 
 
 def main():
@@ -28,9 +28,23 @@ def main():
         # Show a one-time info message (non-blocking)
         root.after(500, lambda: _show_admin_info(root))
     
-    # Create dashboard
-    dashboard = Dashboard(root)
+    # Create tabview for multiple views
+    tabview = ctk.CTkTabview(root)
+    tabview.pack(fill="both", expand=True, padx=0, pady=0)
+    
+    # Add tabs
+    tabview.add("Cache Cleaner")
+    tabview.add("Discovery")
+    
+    # Create dashboard in Cache Cleaner tab
+    from ui.dashboard import Dashboard
+    dashboard = Dashboard(tabview.tab("Cache Cleaner"))
     dashboard.pack(fill="both", expand=True)
+    
+    # Create discovery panel in Discovery tab
+    from ui.discovery_panel import DiscoveryPanel
+    discovery_panel = DiscoveryPanel(tabview.tab("Discovery"))
+    discovery_panel.pack(fill="both", expand=True)
     
     # Run app
     root.mainloop()

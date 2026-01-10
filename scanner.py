@@ -4,6 +4,8 @@ Enhanced scanner module for discovering and analyzing cache folders across syste
 import json
 import os
 import glob
+import hashlib
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Callable, Dict
@@ -359,3 +361,315 @@ class Scanner:
     def get_safe_folders(self, folders: List[FolderInfo]) -> List[FolderInfo]:
         """Get all safe folders."""
         return [f for f in folders if f.safety == "safe" and f.exists]
+
+
+@dataclass
+class FileInfo:
+    """Information about a single file."""
+    path: Path
+    size_bytes: int
+    modified_date: datetime
+    created_date: Optional[datetime] = None
+
+
+@dataclass
+class DuplicateGroup:
+    """Group of duplicate files with the same hash."""
+    file_hash: str
+    size_bytes: int
+    files: List[FileInfo]
+    
+    def get_wasted_space(self) -> int:
+        """Calculate wasted space (size * (copies - 1))."""
+        if len(self.files) < 2:
+            return 0
+        return self.size_bytes * (len(self.files) - 1)
+    
+    def get_representative_name(self) -> str:
+        """Get a representative filename from the group."""
+        if self.files:
+            return self.files[0].path.name
+        return "Unknown"
+
+
+@dataclass
+class LargeFileInfo:
+    """Information about a large file."""
+    path: Path
+    size_bytes: int
+    modified_date: datetime
+    created_date: Optional[datetime]
+    file_type: str  # "video", "installer", "archive", "image", "document", "other"
+    age_days: int
+
+
+class DiscoveryScanner:
+    """Scans for duplicate files and large files across the C: drive."""
+    
+    # System folders to exclude from scanning
+    EXCLUDED_PATHS = [
+        "C:\\Windows",
+        "C:\\Program Files",
+        "C:\\Program Files (x86)",
+        "C:\\ProgramData",
+        "$Recycle.Bin",
+        "System Volume Information",
+        "C:\\$Recycle.Bin",
+        "C:\\System Volume Information",
+    ]
+    
+    # File type mappings
+    FILE_TYPE_MAP = {
+        "video": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v"],
+        "installer": [".exe", ".msi", ".iso", ".img", ".dmg"],
+        "archive": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"],
+        "image": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".psd", ".raw", ".tiff", ".webp"],
+        "document": [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt"],
+    }
+    
+    def __init__(self):
+        """Initialize the discovery scanner."""
+        self.cancel_event = threading.Event()
+    
+    def _should_exclude_path(self, path: Path) -> bool:
+        """Check if a path should be excluded from scanning."""
+        path_str = str(path).lower()
+        for excluded in self.EXCLUDED_PATHS:
+            if excluded.lower() in path_str:
+                return True
+        # Check for hidden/system files
+        if path.name.startswith('.') or path.name.startswith('$'):
+            return True
+        return False
+    
+    def hash_file(self, file_path: Path) -> Optional[str]:
+        """
+        Calculate MD5 hash of a file using chunked reading for memory efficiency.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            MD5 hash string or None if file can't be read
+        """
+        hash_md5 = hashlib.md5()
+        try:
+            with open(file_path, "rb") as f:
+                # Read in chunks to handle large files
+                for chunk in iter(lambda: f.read(8192), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+        except (OSError, PermissionError, IOError):
+            return None
+    
+    def get_file_type(self, file_path: Path) -> str:
+        """Determine file type category from extension."""
+        ext = file_path.suffix.lower()
+        for file_type, extensions in self.FILE_TYPE_MAP.items():
+            if ext in extensions:
+                return file_type
+        return "other"
+    
+    def scan_duplicates(self, root_path: Path, 
+                       progress_callback: Optional[Callable[[int, int], None]] = None,
+                       cancel_event: Optional[threading.Event] = None) -> List[DuplicateGroup]:
+        """
+        Scan for duplicate files using hash-based matching.
+        
+        Args:
+            root_path: Root directory to scan (typically C:\)
+            progress_callback: Optional callback(current_count, total_count)
+            cancel_event: Optional threading.Event to signal cancellation
+            
+        Returns:
+            List of DuplicateGroup objects, sorted by wasted space
+        """
+        if cancel_event is None:
+            cancel_event = self.cancel_event
+        
+        cancel_event.clear()
+        
+        # Dictionary to group files by hash
+        hash_groups: Dict[str, List[FileInfo]] = {}
+        file_count = 0
+        processed_count = 0
+        
+        # First pass: count files (for progress)
+        try:
+            for dirpath, dirnames, filenames in os.walk(root_path):
+                # Filter out excluded directories
+                dirnames[:] = [d for d in dirnames if not self._should_exclude_path(Path(dirpath) / d)]
+                
+                for filename in filenames:
+                    file_path = Path(dirpath) / filename
+                    if self._should_exclude_path(file_path):
+                        continue
+                    try:
+                        stat = file_path.stat()
+                        # Skip files smaller than 1MB
+                        if stat.st_size < 1024 * 1024:
+                            continue
+                        file_count += 1
+                    except (OSError, PermissionError):
+                        continue
+        except (OSError, PermissionError):
+            pass
+        
+        # Second pass: hash files
+        try:
+            for dirpath, dirnames, filenames in os.walk(root_path):
+                if cancel_event.is_set():
+                    break
+                
+                # Filter out excluded directories
+                dirnames[:] = [d for d in dirnames if not self._should_exclude_path(Path(dirpath) / d)]
+                
+                for filename in filenames:
+                    if cancel_event.is_set():
+                        break
+                    
+                    file_path = Path(dirpath) / filename
+                    if self._should_exclude_path(file_path):
+                        continue
+                    
+                    try:
+                        stat = file_path.stat()
+                        # Skip files smaller than 1MB
+                        if stat.st_size < 1024 * 1024:
+                            continue
+                        
+                        # Calculate hash
+                        file_hash = self.hash_file(file_path)
+                        if file_hash is None:
+                            continue
+                        
+                        # Get file metadata
+                        modified_date = datetime.fromtimestamp(stat.st_mtime)
+                        created_date = None
+                        try:
+                            created_date = datetime.fromtimestamp(stat.st_ctime)
+                        except (OSError, AttributeError):
+                            pass
+                        
+                        file_info = FileInfo(
+                            path=file_path,
+                            size_bytes=stat.st_size,
+                            modified_date=modified_date,
+                            created_date=created_date
+                        )
+                        
+                        # Group by hash
+                        if file_hash not in hash_groups:
+                            hash_groups[file_hash] = []
+                        hash_groups[file_hash].append(file_info)
+                        
+                        processed_count += 1
+                        
+                        # Update progress every 50 files
+                        if progress_callback and processed_count % 50 == 0:
+                            progress_callback(processed_count, file_count)
+                    
+                    except (OSError, PermissionError):
+                        continue
+        
+        except (OSError, PermissionError):
+            pass
+        
+        # Convert to DuplicateGroup objects (only groups with 2+ files)
+        duplicate_groups = []
+        for file_hash, files in hash_groups.items():
+            if len(files) >= 2:
+                # All files in group have same size
+                size_bytes = files[0].size_bytes
+                duplicate_groups.append(DuplicateGroup(
+                    file_hash=file_hash,
+                    size_bytes=size_bytes,
+                    files=files
+                ))
+        
+        # Sort by wasted space (largest first)
+        duplicate_groups.sort(key=lambda g: g.get_wasted_space(), reverse=True)
+        
+        return duplicate_groups
+    
+    def scan_large_files(self, root_path: Path, threshold_mb: int,
+                        progress_callback: Optional[Callable[[int, int], None]] = None,
+                        cancel_event: Optional[threading.Event] = None) -> List[LargeFileInfo]:
+        """
+        Scan for large files above threshold.
+        
+        Args:
+            root_path: Root directory to scan (typically C:\)
+            threshold_mb: Minimum file size in MB
+            progress_callback: Optional callback(current_count, total_count)
+            cancel_event: Optional threading.Event to signal cancellation
+            
+        Returns:
+            List of LargeFileInfo objects, sorted by size
+        """
+        if cancel_event is None:
+            cancel_event = self.cancel_event
+        
+        cancel_event.clear()
+        
+        threshold_bytes = threshold_mb * 1024 * 1024
+        large_files = []
+        processed_count = 0
+        
+        try:
+            for dirpath, dirnames, filenames in os.walk(root_path):
+                if cancel_event.is_set():
+                    break
+                
+                # Filter out excluded directories
+                dirnames[:] = [d for d in dirnames if not self._should_exclude_path(Path(dirpath) / d)]
+                
+                for filename in filenames:
+                    if cancel_event.is_set():
+                        break
+                    
+                    file_path = Path(dirpath) / filename
+                    if self._should_exclude_path(file_path):
+                        continue
+                    
+                    try:
+                        stat = file_path.stat()
+                        if stat.st_size < threshold_bytes:
+                            continue
+                        
+                        modified_date = datetime.fromtimestamp(stat.st_mtime)
+                        created_date = None
+                        try:
+                            created_date = datetime.fromtimestamp(stat.st_ctime)
+                        except (OSError, AttributeError):
+                            pass
+                        
+                        age_days = (datetime.now() - modified_date).days
+                        file_type = self.get_file_type(file_path)
+                        
+                        large_file = LargeFileInfo(
+                            path=file_path,
+                            size_bytes=stat.st_size,
+                            modified_date=modified_date,
+                            created_date=created_date,
+                            file_type=file_type,
+                            age_days=age_days
+                        )
+                        
+                        large_files.append(large_file)
+                        processed_count += 1
+                        
+                        # Update progress every 25 files
+                        if progress_callback and processed_count % 25 == 0:
+                            progress_callback(processed_count, 0)  # Total unknown
+                    
+                    except (OSError, PermissionError):
+                        continue
+        
+        except (OSError, PermissionError):
+            pass
+        
+        # Sort by size (largest first)
+        large_files.sort(key=lambda f: f.size_bytes, reverse=True)
+        
+        return large_files
