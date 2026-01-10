@@ -18,22 +18,6 @@ Whether you're a developer drowning in Gradle caches (31 GB, anyone?) or just wo
 
 **No Python installation needed** - Just download and run!
 
-### Windows SmartScreen Warning
-
-When you first run the downloaded `.exe`, Windows may show a SmartScreen warning saying "Windows protected your PC" or "Unknown publisher". This is normal for unsigned executables.
-
-**Why this happens:**
-- The app isn't code-signed (certificates cost $300-500/year)
-- Windows shows this warning for any unsigned executable from the internet
-- The source code is fully open source and available for security review
-
-**How to proceed:**
-1. Click **"More info"** on the warning dialog
-2. Click **"Run anyway"**
-3. The app will launch normally
-
-This is standard for free, open-source tools. Once you run it once, Windows will remember and won't show the warning again.
-
 ### Running from Source (For Developers)
 
 If you want to run from source or contribute:
@@ -59,6 +43,26 @@ If you want to run from source or contribute:
    build.bat
    ```
    The executable will be in the `dist/` folder.
+
+### Windows SmartScreen Warning
+
+When you first run the downloaded `.exe`, Windows may show a SmartScreen warning saying "Windows protected your PC" or "Unknown publisher". This is normal for unsigned executables.
+
+**Why this happens:**
+- The app isn't code-signed (certificates cost $300-500/year)
+- Windows shows this warning for any unsigned executable from the internet
+- The source code is fully open source and available for security review
+
+**How to proceed:**
+1. Click **"More info"** on the warning dialog
+2. Click **"Run anyway"**
+3. The app will launch normally
+
+This is standard for free, open-source tools. Once you run it once, Windows will remember and won't show the warning again.
+
+### For Developers & Contributors
+
+See [RELEASE.md](RELEASE.md) for instructions on creating releases. The GitHub Action will automatically build and attach the executable when you create a release.
 
 ## Features
 
