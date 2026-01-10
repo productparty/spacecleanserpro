@@ -1,8 +1,9 @@
 name: Build Release Executable
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -81,9 +82,14 @@ jobs:
           Move-Item -Path "dist\SpaceCleanserPro.exe" -Destination "dist\SpaceCleanserPro-v$version.exe"
           Write-Host "Renamed to: dist\SpaceCleanserPro-v$version.exe"
       
-      - name: Upload release asset
+      - name: Create release and upload asset
         uses: softprops/action-gh-release@v1
         with:
           files: dist/SpaceCleanserPro-v${{ steps.get_version.outputs.version }}.exe
+          name: Space Cleanser Pro v${{ steps.get_version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
