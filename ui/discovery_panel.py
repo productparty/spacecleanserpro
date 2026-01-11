@@ -775,3 +775,4 @@ class DiscoveryPanel(ctk.CTkFrame):
         else:
             self.scan_duplicates_btn.configure(state="normal", text="Scan for Duplicates")
             self.scan_large_files_btn.configure(state="normal", text="Scan for Large Files")
+        self.scan_both_btn.configure(state="normal")

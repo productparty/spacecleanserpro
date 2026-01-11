@@ -21,8 +21,9 @@ class DeleteConfirmationDialog(ctk.CTkToplevel):
         self.result = False
         
         self.title("Confirm Deletion")
-        self.geometry("600x400")
+        self.geometry("600x500")
         self.resizable(False, False)
+        self.minsize(600, 500)
         
         # Make dialog modal
         self.transient(parent)
@@ -31,7 +32,7 @@ class DeleteConfirmationDialog(ctk.CTkToplevel):
         # Center on parent
         self.update_idletasks()
         x = parent.winfo_x() + (parent.winfo_width() // 2) - (600 // 2)
-        y = parent.winfo_y() + (parent.winfo_height() // 2) - (400 // 2)
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - (500 // 2)
         self.geometry(f"+{x}+{y}")
         
         # Content frame
@@ -75,9 +76,9 @@ class DeleteConfirmationDialog(ctk.CTkToplevel):
         )
         impact_label.pack(pady=(0, 10))
         
-        # File list (scrollable)
-        scroll_frame = ctk.CTkScrollableFrame(content, height=150)
-        scroll_frame.pack(fill="both", expand=True, pady=(0, 20))
+        # File list (scrollable) - limit height so buttons stay visible
+        scroll_frame = ctk.CTkScrollableFrame(content, height=120)
+        scroll_frame.pack(fill="x", pady=(0, 20))
         
         for file_path in files[:20]:  # Show first 20 files
             file_label = ctk.CTkLabel(
@@ -111,15 +112,16 @@ class DeleteConfirmationDialog(ctk.CTkToplevel):
         )
         warning_text.pack(padx=10, pady=10)
         
-        # Buttons
+        # Buttons - ensure they're always visible at bottom
         button_frame = ctk.CTkFrame(content, fg_color="transparent")
-        button_frame.pack(fill="x")
+        button_frame.pack(fill="x", pady=(10, 0))
         
         cancel_btn = ctk.CTkButton(
             button_frame,
             text="Cancel",
             command=self._on_cancel,
             width=120,
+            height=35,
             fg_color="gray"
         )
         cancel_btn.pack(side="right", padx=(10, 0))
@@ -129,9 +131,13 @@ class DeleteConfirmationDialog(ctk.CTkToplevel):
             text="Delete",
             command=self._on_confirm,
             width=120,
+            height=35,
             fg_color="#dc3545"
         )
         confirm_btn.pack(side="right")
+        
+        # Ensure dialog is properly sized and buttons are visible
+        self.update_idletasks()
         
         # Focus on cancel button by default
         self.after(100, lambda: cancel_btn.focus())
